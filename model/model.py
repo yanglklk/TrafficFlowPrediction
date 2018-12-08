@@ -15,7 +15,6 @@ def get_lstm(units):
     # Returns
         model: Model, nn model.
     """
-
     model = Sequential()
     model.add(LSTM(units[1], input_shape=(units[0], 1), return_sequences=True))
     model.add(LSTM(units[2]))
@@ -91,3 +90,7 @@ def get_saes(layers):
     models = [sae1, sae2, sae3, saes]
 
     return models
+def clster_connect(layers,split):
+
+
+

@@ -1,6 +1,7 @@
 """
 Traffic Flow Prediction with Neural Networks(SAEs、LSTM、GRU).
 """
+import os
 import math
 import warnings
 import numpy as np
@@ -24,7 +25,8 @@ def MAPE(y_true, y_pred):
     # Returns
         mape: Double, result data for train.
     """
-
+    # y: 真实数据中>0 的 .y_pred 避免二者在剔除零元素时不相等的问题
+    # 应为下面要除y因此y不能为零
     y = [x for x in y_true if x > 0]
     y_pred = [y_pred[i] for i in range(len(y_true)) if y_true[i] > 0]
 
@@ -48,7 +50,11 @@ def eva_regress(y_true, y_pred):
         y_true: List/ndarray, ture data.
         y_pred: List/ndarray, predicted data.
     """
-
+    # vs 解释方差回归分数函数 最佳分数为1.0，较低值更差
+    # mae 平均绝对误差
+    # mse 平均方差
+    # rmse mse 开方
+    # r2 回归分数函数 最佳为1.0
     mape = MAPE(y_true, y_pred)
     vs = metrics.explained_variance_score(y_true, y_pred)
     mae = metrics.mean_absolute_error(y_true, y_pred)
@@ -104,20 +110,24 @@ def main():
     file1 = 'data/train.csv'
     file2 = 'data/test.csv'
     _, _, X_test, y_test, scaler = process_data(file1, file2, lag)
+    # 将已经规格化的在进行一次反规格化，得到原始数据
     y_test = scaler.inverse_transform(y_test.reshape(-1, 1)).reshape(1, -1)[0]
 
     y_preds = []
+    os.environ["PATH"] += os.pathsep +r'D:\document\graphviz\bin'
     for name, model in zip(names, models):
         if name == 'SAEs':
             X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1]))
         else:
             X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1], 1))
         file = 'images/' + name + '.png'
-        plot_model(model, to_file=file, show_shapes=True)
+        plot_model(model, to_file=file,show_shapes=True)
         predicted = model.predict(X_test)
         predicted = scaler.inverse_transform(predicted.reshape(-1, 1)).reshape(1, -1)[0]
         y_preds.append(predicted[:288])
         print(name)
+        # y_test 真实数据，全部 predicated 预测，全部
+
         eva_regress(y_test, predicted)
 
     plot_results(y_test[: 288], y_preds, names)
